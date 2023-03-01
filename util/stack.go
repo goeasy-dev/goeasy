@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	stackOffset  = 3
+	stackOffset  = 2
 	callerOffset = 2
 	stackDepth   = 50
 
@@ -33,7 +33,21 @@ func GetStack(offset ...int) CallStack {
 		o += offset[0]
 	}
 
-	return getStack(o, stackDepth)
+	callers := make([]uintptr, stackDepth)
+	entryCount := runtime.Callers(o, callers)
+
+	frames := runtime.CallersFrames(callers)
+	out := make(CallStack, 0, entryCount)
+	for {
+		frame, more := frames.Next()
+		out = append(out, frame)
+
+		if !more {
+			break
+		}
+	}
+
+	return out
 }
 
 type Caller struct {
@@ -76,22 +90,4 @@ func CallerFromFunc(f *runtime.Func) Caller {
 	}
 
 	return c
-}
-
-func getStack(offset, depth int) CallStack {
-	callers := make([]uintptr, depth)
-	entryCount := runtime.Callers(offset, callers)
-
-	frames := runtime.CallersFrames(callers)
-	out := make(CallStack, 0, entryCount)
-	for {
-		frame, more := frames.Next()
-		out = append(out, frame)
-
-		if !more {
-			break
-		}
-	}
-
-	return out
 }
