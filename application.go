@@ -19,9 +19,15 @@ type Application struct {
 	runners []RunnerFunc
 }
 
+var defaultRunners = make([]RunnerFunc, 0, 10)
+
+func RegisterDefaultRunner(runner RunnerFunc) {
+	defaultRunners = append(defaultRunners, runner)
+}
+
 func NewApplication() *Application {
 	return &Application{
-		runners: make([]RunnerFunc, 0, 10),
+		runners: append([]RunnerFunc{}, defaultRunners...),
 	}
 }
 

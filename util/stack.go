@@ -68,6 +68,7 @@ func GetCaller() Caller {
 }
 
 var callerNameRegexExp = regexp.MustCompile(callerNameRegex)
+var defaultMatches = []string{"", "unknown", "unknown"}
 
 func CallerFromFunc(f *runtime.Func) Caller {
 	if f == nil {
@@ -76,7 +77,7 @@ func CallerFromFunc(f *runtime.Func) Caller {
 
 	matches := callerNameRegexExp.FindStringSubmatch(f.Name())
 	if matches == nil {
-		matches = make([]string, 4)
+		matches = defaultMatches
 	}
 
 	file, line := f.FileLine(f.Entry())

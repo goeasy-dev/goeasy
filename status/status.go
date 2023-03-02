@@ -2,9 +2,13 @@ package status
 
 import (
 	"context"
+	"fmt"
 
 	"goeasy.dev/status/statustype"
+	"goeasy.dev/util"
 )
+
+const nameRandomLength = 8
 
 func init() {
 	checks = map[statustype.Type][]check{
@@ -22,7 +26,14 @@ type check struct {
 var checks map[statustype.Type][]check
 
 func SimpleCheck(kind statustype.Type) *bool {
-	return NamedSimpleCheck("", kind)
+	caller := util.GetCaller()
+	fmt.Println(caller)
+	name := caller.Name
+	if caller.Type != "" {
+		name = fmt.Sprintf("%s.%s", caller.Type, caller.Name)
+	}
+
+	return NamedSimpleCheck(fmt.Sprintf("%s_%s", name, util.RandomString(nameRandomLength)), kind)
 }
 
 func NamedSimpleCheck(name string, t statustype.Type) *bool {

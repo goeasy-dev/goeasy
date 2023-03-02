@@ -4,23 +4,25 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"goeasy.dev/status/statustype"
 )
 
-func HandlerFunc() http.HandlerFunc {
+func Handler() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/liveness", getHandlerFunc(Liveness))
-	mux.HandleFunc("/readiness", getHandlerFunc(Readiness))
-	mux.HandleFunc("/startup", getHandlerFunc(Startup))
+	mux.HandleFunc("/liveness", getHandlerFunc(statustype.Liveness))
+	mux.HandleFunc("/readiness", getHandlerFunc(statustype.Readiness))
+	mux.HandleFunc("/startup", getHandlerFunc(statustype.Startup))
 
-	return mux.ServeHTTP
+	return mux
 }
 
 type statusResult struct {
 	Status map[string]bool `json:"status"`
 }
 
-func getHandlerFunc(kind CheckType) http.HandlerFunc {
+func getHandlerFunc(kind statustype.Type) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !(r.Method == http.MethodGet || r.Method == http.MethodHead) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
