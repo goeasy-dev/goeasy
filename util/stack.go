@@ -3,8 +3,8 @@ package util
 import (
 	"fmt"
 	"io"
-	"regexp"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -12,10 +12,9 @@ const (
 	callerOffset = 2
 	stackDepth   = 50
 
-	callerNameRegex    = `^(?P<Package>.*\/[^.]*)\.(?:(?P<Type>.*)\.)?(?P<Name>.*)$`
-	callerPackageIndex = 1
-	callerTypeIndex    = 2
-	callerNameIndex    = 3
+	callerPackageIndex = 0
+	callerTypeIndex    = 1
+	callerNameIndex    = 2
 )
 
 type CallStack []runtime.Frame
@@ -67,25 +66,26 @@ func GetCaller() Caller {
 	return CallerFromFunc(runtime.FuncForPC(pc))
 }
 
-var callerNameRegexExp = regexp.MustCompile(callerNameRegex)
-var defaultMatches = []string{"", "unknown", "unknown"}
-
 func CallerFromFunc(f *runtime.Func) Caller {
 	if f == nil {
 		return Caller{}
 	}
 
-	matches := callerNameRegexExp.FindStringSubmatch(f.Name())
-	if matches == nil {
-		matches = defaultMatches
+	parts := strings.Split(f.Name(), ".")
+	if len(parts) > 3 {
+		parts[1] = fmt.Sprintf("%s.%s", parts[0], parts[1])
+		parts = parts[1:]
+	} else if strings.ContainsRune(parts[1], '/') {
+		parts[0] = fmt.Sprintf("%s.%s", parts[0], parts[1])
+		parts[1] = "unknown"
 	}
 
 	file, line := f.FileLine(f.Entry())
 
 	c := Caller{
-		Name:    matches[callerNameIndex],
-		Type:    matches[callerTypeIndex],
-		Package: matches[callerPackageIndex],
+		Name:    parts[callerNameIndex],
+		Type:    parts[callerTypeIndex],
+		Package: parts[callerPackageIndex],
 		File:    file,
 		Line:    line,
 	}
