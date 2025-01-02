@@ -25,9 +25,9 @@ type check struct {
 
 var checks map[statustype.Type][]check
 
+// SimpleCheck creates a new named check that can be toggled
 func SimpleCheck(kind statustype.Type) *bool {
 	caller := util.GetCaller()
-	fmt.Println(caller)
 	name := caller.Name
 	if caller.Type != "" {
 		name = fmt.Sprintf("%s.%s", caller.Type, caller.Name)
@@ -36,6 +36,7 @@ func SimpleCheck(kind statustype.Type) *bool {
 	return NamedSimpleCheck(fmt.Sprintf("%s_%s", name, util.RandomString(nameRandomLength)), kind)
 }
 
+// NamedSimpleCheck creates a new named check that can be toggled
 func NamedSimpleCheck(name string, t statustype.Type) *bool {
 	v := false
 	c := check{
@@ -56,6 +57,7 @@ func NamedSimpleCheck(name string, t statustype.Type) *bool {
 	return c.val
 }
 
+// CheckStatus returns the status of all checks for a given kind
 func CheckStatus(ctx context.Context, kind statustype.Type) (map[string]bool, bool) {
 	out := map[string]bool{}
 	ok := true

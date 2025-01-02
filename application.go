@@ -2,13 +2,13 @@ package goeasy
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 
-	"goeasy.dev/util"
+	"goeasy.dev/errors"
 )
 
 type StopFunc func(ctx context.Context) error
@@ -43,7 +43,7 @@ func (a Application) Start(ctx context.Context, runners ...RunnerFunc) error {
 	for i, runner := range runners {
 		stopFuncs[i], err = runner(ctx)
 		if err != nil {
-			return fmt.Errorf("unable to start runner: %w", err)
+			return errors.Wrap(err, "unable to start runner")
 		}
 	}
 
@@ -53,7 +53,8 @@ func (a Application) Start(ctx context.Context, runners ...RunnerFunc) error {
 
 	// TODO: implement timeout for application stop
 	// TODO: implement timeout for runner stop
-	for _, stopFunc := range util.ReverseSlice(stopFuncs) {
+	slices.Reverse(stopFuncs)
+	for _, stopFunc := range stopFuncs {
 		err = stopFunc(ctx)
 		if err != nil {
 			log.Println("unable to stop runner: %w", err)

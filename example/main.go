@@ -2,46 +2,85 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"time"
 
 	"goeasy.dev"
+	"goeasy.dev/application/runners"
 	"goeasy.dev/bootstrap"
+	"goeasy.dev/cache"
+	"goeasy.dev/errors"
+	"goeasy.dev/observability/metrics"
 	"goeasy.dev/status"
 	"goeasy.dev/status/statustype"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
+//go:generate go run ./../cmd/goeasy gen
 func main() {
 	ctx, done := bootstrap.Bootstrap()
 	defer done()
 
 	application := goeasy.NewApplication()
-	statusCheck := status.SimpleCheck(statustype.Startup & statustype.Readiness)
+	statusCheck := status.SimpleCheck(statustype.Startup | statustype.Readiness)
 
-	toggleRunner := func(ctx context.Context) (goeasy.StopFunc, error) {
-		done := make(chan struct{})
-
-		t := time.NewTicker(time.Second * 5)
-		go func() {
-			for {
-				select {
-				case <-done:
-					t.Stop()
-					return
-				case <-t.C:
-					*statusCheck = !*statusCheck
-				}
-			}
-		}()
-
-		return func(ctx context.Context) error {
-			close(done)
+	toggleRunner := runners.Timed(runners.TimedOptions{
+		HandleFunc: func(ctx context.Context) error {
+			log.Println("toggling status check")
+			*statusCheck = !*statusCheck
 			return nil
-		}, nil
-	}
+		},
+		Interval: time.Second * 5,
+	})
 
-	err := application.Start(ctx, toggleRunner)
+	duration := metrics.NewDuration("http_request_duration")
+	httpRunner := runners.Http(runners.HttpOptions{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			record := duration.Start(r.Context(), attribute.String("path", r.URL.Path))
+			defer record()
+
+			method := r.Method
+			if method == http.MethodGet {
+				var dest string
+				err := cache.Get(r.Context(), r.URL.Path, &dest)
+				if errors.Is(err, errors.ErrNotFound) {
+					w.WriteHeader(http.StatusNotFound)
+					return
+				} else if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(dest))
+			} else if method == http.MethodPost {
+				defer r.Body.Close()
+				key := r.URL.Path
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+
+				err = cache.Put(r.Context(), key, string(body))
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+
+				w.WriteHeader(http.StatusCreated)
+			}
+		}),
+	})
+
+	err := application.Start(ctx, toggleRunner, httpRunner)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 }
