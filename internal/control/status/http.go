@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"goeasy.dev/status"
 	"goeasy.dev/status/statustype"
 )
 
@@ -29,12 +30,12 @@ func getHandlerFunc(kind statustype.Type) http.HandlerFunc {
 			return
 		}
 
-		status, ok := CheckStatus(r.Context(), kind)
+		w.Header().Add("content-type", "application/json")
+
+		status, ok := status.CheckStatus(r.Context(), kind)
 		if !ok {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
-
-		w.Header().Add("content-type", "application/json")
 
 		if r.Method == http.MethodHead {
 			return

@@ -9,9 +9,9 @@ const (
 )
 
 func (target Type) Is(t Type) bool {
-	return t&target == target
+	return t&target == t
 }
 
 func Is(t Type, target Type) bool {
-	return t&target == target
+	return t&target == t
 }

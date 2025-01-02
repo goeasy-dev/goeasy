@@ -78,6 +78,8 @@ func CallerFromFunc(f *runtime.Func) Caller {
 	} else if strings.ContainsRune(parts[1], '/') {
 		parts[0] = fmt.Sprintf("%s.%s", parts[0], parts[1])
 		parts[1] = "unknown"
+	} else if len(parts) == 2 {
+		parts = []string{parts[0], "", parts[1]}
 	}
 
 	file, line := f.FileLine(f.Entry())
