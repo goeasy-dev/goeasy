@@ -28,6 +28,8 @@ func (m myService) Bar() string {
 }
 
 func TestContainer(t *testing.T) {
+	container.Clear()
+
 	container.Set[FooBar](&myService{})
 	container.SetResolver(func() Foo {
 		return container.Resolve[FooBar]()
@@ -41,9 +43,39 @@ func TestContainer(t *testing.T) {
 	assert.Equal(t, "foo", fooService.Foo())
 }
 
+func TestImplementsMode(t *testing.T) {
+	container.Clear()
+	container.ImplementsMode = true
+
+	container.Set(&myService{})
+
+	service := container.Resolve[FooBar]()
+	assert.Equal(t, "foo", service.Foo())
+	assert.Equal(t, "bar", service.Bar())
+
+	fooService := container.Resolve[Foo]()
+	assert.Equal(t, "foo", fooService.Foo())
+
+	container.ImplementsMode = false
+}
+
 func BenchmarkResolve(b *testing.B) {
+	container.Clear()
+
 	container.Set[FooBar](&myService{})
 	for i := 0; i < b.N; i++ {
 		container.Resolve[FooBar]()
 	}
+}
+
+func BenchmarkResolveImplements(b *testing.B) {
+	container.Clear()
+	container.ImplementsMode = true
+
+	container.Set(&myService{})
+	for i := 0; i < b.N; i++ {
+		container.Resolve[FooBar]()
+	}
+
+	container.ImplementsMode = false
 }
