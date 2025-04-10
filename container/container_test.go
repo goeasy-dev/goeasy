@@ -59,6 +59,24 @@ func TestImplementsMode(t *testing.T) {
 	container.ImplementsMode = false
 }
 
+func TestImplementsWithResolver(t *testing.T) {
+	container.Clear()
+	container.ImplementsMode = true
+
+	container.SetResolver(func() *myService {
+		return &myService{}
+	})
+
+	service := container.Resolve[FooBar]()
+	assert.Equal(t, "foo", service.Foo())
+	assert.Equal(t, "bar", service.Bar())
+
+	fooService := container.Resolve[Foo]()
+	assert.Equal(t, "foo", fooService.Foo())
+
+	container.ImplementsMode = false
+}
+
 func BenchmarkResolve(b *testing.B) {
 	container.Clear()
 

@@ -1,6 +1,7 @@
 package container
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -17,7 +18,7 @@ func Resolve[T any]() T {
 
 	val, ok := services[targetType]
 	if !ok && !ImplementsMode {
-		panic("type not registered")
+		panic(fmt.Sprintf("type %s not registered", targetType))
 	} else if !ok {
 		return handleImplementsMode[T]()
 	}
