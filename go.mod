@@ -6,10 +6,29 @@ replace goeasy.dev/cmd/goeasy => ./cmd/goeasy
 
 require (
 	github.com/allegro/bigcache/v3 v3.1.0
+	github.com/aws/aws-sdk-go-v2 v1.36.3
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
+	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/metric v1.33.0
+)
+
+require (
+	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.34 // indirect
+	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.51.0 // indirect
+	github.com/valyala/tcplisten v1.0.0 // indirect
 )
 
 require (

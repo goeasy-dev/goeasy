@@ -110,14 +110,23 @@ func namedGet(m middleware.Chain, db sqlx.ExtContext, ctx context.Context, dest 
 		}
 		defer rows.Close()
 
-		if rows.Next() {
+		hasRows := rows.Next()
+		if hasRows {
 			err = rows.StructScan(dest)
 			if err != nil {
 				return err
 			}
 		}
 
-		return rows.Err()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		if !hasRows {
+			return sql.ErrNoRows
+		}
+
+		return nil
 	})
 }
 
