@@ -22,22 +22,12 @@ type Event struct {
 	Metadata map[string]string
 }
 
-// Publisher defines the interface for publishing events
-type Publisher interface {
+// Driver defines the interface that event publishing drivers must implement
+type Driver interface {
 	// Publish sends an event to the event bus
 	Publish(ctx context.Context, event Event) error
 	// PublishBatch sends multiple events to the event bus
 	PublishBatch(ctx context.Context, events []Event) error
-	// Close closes the publisher and releases any resources
-	Close() error
-}
-
-// Driver defines the interface that event publishing drivers must implement
-type Driver interface {
-	// Initialize sets up the driver with the given configuration
-	Initialize(ctx context.Context, config interface{}) error
-	// CreatePublisher creates a new publisher instance
-	CreatePublisher(ctx context.Context, config interface{}) (Publisher, error)
 	// Close closes the driver and releases any resources
 	Close() error
 }
@@ -91,15 +81,6 @@ func RegisterDriver(name string, driver Driver) {
 	globalRegistry.RegisterDriver(name, driver)
 }
 
-// InitializeDriver initializes a driver with the given configuration
-func InitializeDriver(ctx context.Context, name string, config interface{}) error {
-	driver, ok := globalRegistry.GetDriver(name)
-	if !ok {
-		return ErrDriverNotFound
-	}
-	return driver.Initialize(ctx, config)
-}
-
 // Close closes the global registry
 func Close() error {
 	return globalRegistry.Close()
@@ -117,13 +98,7 @@ func PublishWithDriver(ctx context.Context, driverName string, event Event) erro
 		return ErrDriverNotFound
 	}
 
-	publisher, err := driver.CreatePublisher(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer publisher.Close()
-
-	return publisher.Publish(ctx, event)
+	return driver.Publish(ctx, event)
 }
 
 // PublishBatch publishes multiple events using the default driver
@@ -138,13 +113,7 @@ func PublishBatchWithDriver(ctx context.Context, driverName string, events []Eve
 		return ErrDriverNotFound
 	}
 
-	publisher, err := driver.CreatePublisher(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer publisher.Close()
-
-	return publisher.PublishBatch(ctx, events)
+	return driver.PublishBatch(ctx, events)
 }
 
 // SetDefaultDriver sets the default driver to use

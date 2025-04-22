@@ -16,19 +16,10 @@ func TestEventBridgeDriver(t *testing.T) {
 	ctx := context.Background()
 
 	// Create driver
-	driver := aws.NewDriver()
-
-	// Initialize driver
-	err := driver.Initialize(ctx, aws.Config{
-		Region:  "us-west-2",
+	driver, err := aws.NewDriver(ctx, aws.Config{
 		BusName: "test-bus",
 	})
 	require.NoError(t, err)
-
-	// Create publisher
-	publisher, err := driver.CreatePublisher(ctx, nil)
-	require.NoError(t, err)
-	require.NotNil(t, publisher)
 
 	// Test publishing a single event
 	event := events.Event{
@@ -40,7 +31,7 @@ func TestEventBridgeDriver(t *testing.T) {
 		Metadata: map[string]string{"env": "test"},
 	}
 
-	err = publisher.Publish(ctx, event)
+	err = driver.Publish(ctx, event)
 	// Note: This will fail in tests without AWS credentials
 	// In a real test environment, you would use a mock or localstack
 	assert.Error(t, err)
@@ -65,16 +56,11 @@ func TestEventBridgeDriver(t *testing.T) {
 		},
 	}
 
-	err = publisher.PublishBatch(ctx, events)
+	err = driver.PublishBatch(ctx, events)
 	// Note: This will fail in tests without AWS credentials
 	// In a real test environment, you would use a mock or localstack
 	assert.Error(t, err)
 
-	// Close publisher
-	err = publisher.Close()
-	assert.NoError(t, err)
-
-	// Close driver
 	err = driver.Close()
 	assert.NoError(t, err)
 }

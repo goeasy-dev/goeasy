@@ -13,17 +13,13 @@ func main() {
 	ctx := context.Background()
 
 	// Register the AWS EventBridge driver
-	driver := aws.NewDriver()
-	events.RegisterDriver("eventbridge", driver)
-
-	// Initialize the driver
-	err := events.InitializeDriver(ctx, "eventbridge", aws.Config{
-		Region:  "us-west-2",
+	driver, err := aws.NewDriver(ctx, aws.Config{
 		BusName: "my-event-bus",
 	})
 	if err != nil {
-		log.Fatalf("Failed to initialize driver: %v", err)
+		log.Fatalf("Failed to create driver: %v", err)
 	}
+	events.RegisterDriver("eventbridge", driver)
 
 	// Set as default driver
 	err = events.SetDefaultDriver("eventbridge")
